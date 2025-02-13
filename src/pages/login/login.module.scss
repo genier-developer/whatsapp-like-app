@@ -1,0 +1,32 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 300px;
+
+  input {
+    padding: 8px;
+    font-size: 14px;
+  }
+
+  button {
+    padding: 10px;
+    font-size: 16px;
+    background-color: #25d366;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s;
+
+    &:hover {
+      background-color: #1ebe5d;
+    }
+  }
+}

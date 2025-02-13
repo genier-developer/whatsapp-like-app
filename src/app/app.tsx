@@ -1,10 +1,16 @@
-function App() {
+import {FC} from "react";
+import {BrowserRouter, Route, Routes} from "react-router-dom";
+import {Login} from "../pages/login";
+
+export const  App: FC = ()=> {
 
   return (
-    <>
-      <h1>Chat</h1>
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        {/*<Route path="/chat" element={<Chat />} />*/}
+      </Routes>
+    </BrowserRouter>
   )
 }
 
-export default App
