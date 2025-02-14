@@ -20,6 +20,7 @@ export const Login: FC = () => {
 
   return (
     <div className={s.container}>
+      <h1>Whatsapp chat</h1>
       <form className={s.form} onSubmit={handleSubmit(onSubmit)}>
         <input {...register("idInstance")} placeholder="ID Instance" required />
         <input {...register("apiTokenInstance")} placeholder="API Token" required />
