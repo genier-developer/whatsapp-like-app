@@ -24,7 +24,7 @@ export const Login: FC = () => {
       <form className={s.form} onSubmit={handleSubmit(onSubmit)}>
         <input {...register("idInstance")} placeholder="ID Instance" required />
         <input {...register("apiTokenInstance")} placeholder="API Token" required />
-        <button type="submit">Log in</button>
+        <button className={s.button} type="submit">Log in</button>
       </form>
     </div>
   );
