@@ -19,8 +19,8 @@ export const Chat: FC = () => {
   const [isPollingActive, setIsPollingActive] = useState<boolean>(true);
   const isMounted = useRef(true);
 
-  const idInstance: string | null = localStorage.getItem("idInstance");
-  const apiTokenInstance: string | null = localStorage.getItem("apiTokenInstance");
+  const idInstance = import.meta.env.VITE_ID_INSTANCE;
+  const apiTokenInstance = import.meta.env.VITE_API_TOKEN_INSTANCE;
 
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
@@ -32,22 +32,34 @@ export const Chat: FC = () => {
         return;
       }
 
-      const url = `https://api.green-api.com/waInstance${idInstance}/receiveNotification/${apiTokenInstance}`;
+      const url = `https://1103.api.green-api.com/waInstance${idInstance}/receiveNotification/${apiTokenInstance}`;
       
       try {
         const { data } = await axios.get(url);
-        if (data) {
-          setMessages((prev) => [
-            ...prev,
-            { text: data.messageData.textMessage, fromUser: false },
-          ]);
+        
+        if (data && data.receiptId) {
+          if (
+            data.body.typeWebhook === 'incomingMessageReceived' && 
+            data.body.messageData?.textMessageData?.textMessage
+          ) {
+            setMessages((prev) => [
+              ...prev,
+              { text: data.body.messageData.textMessageData.textMessage, fromUser: false },
+            ]);
+          }
+          
+          await axios.delete(
+            `https://1103.api.green-api.com/waInstance${idInstance}/deleteNotification/${apiTokenInstance}/${data.receiptId}`
+          );
         }
       } catch (error) {
         console.error("Error of receiving messages:", error);
-        setIsPollingActive(false); // Останавливаем опрос при ошибке
+        if (axios.isAxiosError(error)) {
+          console.error("API Error details:", error.response?.data);
+        }
+        setIsPollingActive(false);
         return;
       }
-
 
       if (isMounted.current && isPollingActive) {
         timeoutId = setTimeout(fetchMessages, 5000);
@@ -99,21 +111,32 @@ export const Chat: FC = () => {
     }
 
     const chatId = `${formattedNumber}@c.us`;
-    const url = `https://api.green-api.com/waInstance${idInstance}/sendMessage/${apiTokenInstance}`;
+    const url = `https://1103.api.green-api.com/waInstance${idInstance}/sendMessage/${apiTokenInstance}`;
 
     try {
-      await axios.post(url, { chatId, message: text });
-      setMessages((prev) => [...prev, { text, fromUser: true }]);
-      reset();
+      const response = await axios.post(url, { 
+        chatId, 
+        message: text,
+        quotedMessageId: null
+      });
+      
+      if (response.data && response.data.idMessage) {
+        setMessages((prev) => [...prev, { text, fromUser: true }]);
+        reset();
+      } else {
+        setError("Error of sending message. Please, try again");
+      }
     } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("Error sending message:", error.response?.data || error.message);
+      } else {
+        console.error("Unexpected error:", error);
+      }
       setError("Error of sending message. Please, try again");
-      console.error("Error sending message:", error);
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("idInstance");
-    localStorage.removeItem("apiTokenInstance");
     navigate("/");
   };
 
@@ -125,7 +148,7 @@ export const Chat: FC = () => {
     <div className={s.chat}>
       <header className={s.header}>
         <h1>WhatsApp Chat</h1>
-        <div>
+        <>
           <button 
             className={s.button} 
             onClick={togglePolling}
@@ -134,7 +157,7 @@ export const Chat: FC = () => {
             {isPollingActive ? 'Stop updating' : 'Resume updating'}
           </button>
           <button className={s.button} onClick={handleLogout}>Exit</button>
-        </div>
+        </>
       </header>
 
       <input
